@@ -93,7 +93,6 @@ impl Request {
             if b as char == '\n' {
                 if first_line.is_empty() {
                     first_line = String::from_utf8(buffer[0..buffer.len() - 2].to_vec())?;
-                    println!("First line: {:?}", first_line);
                     // Clear the buffer to read the next line now.
                     buffer.clear()
                 } else {
@@ -104,7 +103,6 @@ impl Request {
 
                     // Parse headers
                     let header_line = String::from_utf8(buffer[0..buffer.len() - 2].to_vec())?;
-                    println!("Header line: {:?}", header_line);
                     buffer.clear();
 
                     let mut iter = header_line.split(" ");
@@ -126,12 +124,44 @@ impl Request {
                 }
             }
         }
+        // Let's parse method, version and query parameters.
+        let mut first_line_iter = first_line.split(" ");
+        let method: Method = first_line_iter.next().unwrap().into();
+        let uri_str = first_line_iter.next().unwrap().to_string();
+
+        let mut uri_iter = uri_str.split("?");
+
+        // The first thing is the uri
+        let uri = match uri_iter.next() {
+            Some(u) => u.to_string(),
+            None => return Err(Error::ParsingError),
+        };
+
+        let mut query_params: HashMap<String, String> = HashMap::new();
+        match uri_iter.next() {
+            Some(q) => {
+                for kv in q.split("&") {
+                    let mut iter = kv.split("=");
+                    let key = match iter.next() {
+                        Some(k) => k,
+                        None => return Err(Error::ParsingError),
+                    };
+                    let value = match iter.next() {
+                        Some(k) => k,
+                        None => return Err(Error::ParsingError),
+                    };
+                    query_params.insert(key.to_string(), value.to_string());
+                }
+            }
+            None => (),
+        }
+        let version: Version = first_line_iter.next().unwrap().into();
         Ok(Self {
-            method: Method::DELETE,
-            uri: "sfsf".to_string(),
-            version: Version::HTTP1_1,
+            method: method,
+            uri: uri,
+            version: version,
             headers,
-            query_params: HashMap::new(),
+            query_params: query_params,
             path_params: HashMap::new(),
         })
     }
