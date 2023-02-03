@@ -1,6 +1,6 @@
-use std::{collections::HashMap, hash::Hash};
-
-use tokio::io::AsyncReadExt;
+use std::collections::HashMap;
+use tokio::io::AsyncWriteExt;
+use tokio::{io::AsyncReadExt, net::TcpStream};
 
 #[derive(Debug)]
 pub enum Error {
@@ -164,5 +164,73 @@ impl Request {
             query_params: query_params,
             path_params: HashMap::new(),
         })
+    }
+}
+
+#[derive(Debug)]
+pub struct Connection {
+    pub request: Request,
+    pub socket: TcpStream,
+}
+
+pub struct StatusCode {
+    pub code: usize,
+    pub msg: &'static str,
+}
+
+impl StatusCode {
+    pub fn ok() -> Self {
+        StatusCode {
+            code: 200,
+            msg: "OK",
+        }
+    }
+}
+
+pub struct Response {
+    pub status: StatusCode,
+    pub headers: HashMap<String, String>,
+    pub body: String,
+}
+
+impl Connection {
+    pub async fn new(mut socket: TcpStream) -> Result<Connection, Error> {
+        let req = Request::new(&mut socket).await?;
+        Ok(Connection {
+            request: req,
+            socket: socket,
+        })
+    }
+
+    /// To send response back
+    pub async fn respond(&mut self, res: Response) -> Result<(), Error> {
+        self.socket
+            .write_all(
+                format!(
+                    "{} {} {}\r\n",
+                    self.request.version, res.status.code, res.status.msg
+                )
+                .as_bytes(),
+            )
+            .await?;
+
+        for (k, v) in res.headers.iter() {
+            self.socket
+                .write_all(format!("{}: {}\r\n", k, v).as_bytes())
+                .await?;
+        }
+
+        self.socket.write_all(b"\r\n").await?;
+
+        // Finally add reponse body.
+        if res.body.len() > 0 {
+            println!("Body {}", res.body);
+            self.socket
+                .write_all(format!("{}\r\n", res.body).as_bytes())
+                .await?;
+        }
+        self.socket.write_all(b"\r\n").await?;
+        println!("responded");
+        Ok(())
     }
 }
