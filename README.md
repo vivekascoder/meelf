@@ -2,6 +2,20 @@
 
 Meelf is a simple web server implementation.
 
+## Router
+
+```rs
+use matchit::Router;
+
+let mut router = Router::new();
+router.insert("/home", "Welcome!")?;
+router.insert("/users/:id", "A User")?;
+
+let matched = router.at("/users/978")?;
+assert_eq!(matched.params.get("id"), Some("978"));
+assert_eq!(*matched.value, "A User");
+```
+
 ## TODO
 
 - [ ] Implement http query params parsing.
@@ -22,5 +36,5 @@ Meelf is a simple web server implementation.
 
 ## Credits
 
-https://github.com/amirrezaask/khadem
-https://github.com/viz-rs/path-tree/blob/main/src/parser.rs
+- https://github.com/amirrezaask/khadem
+- https://github.com/ibraheemdev/matchit/blob/master/README.md

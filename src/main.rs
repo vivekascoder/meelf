@@ -1,17 +1,9 @@
 use http::request::{self, Connection, Error, Request, Response, StatusCode};
-use std::io::BufReader;
-use std::net::SocketAddr;
-use std::{collections::HashMap, io};
+use std::collections::HashMap;
 use tokio::net::{TcpListener, TcpStream};
 mod http;
 
 // fn handle_connection(mut stream: TcpStream) {}
-
-async fn handle_tcp_strema(socket: &mut TcpStream) -> Result<Request, Error> {
-    let request = Request::new(socket).await?;
-    println!("Request: {:?}", request);
-    Ok(request)
-}
 
 #[tokio::main]
 async fn main() -> Result<(), request::Error> {
