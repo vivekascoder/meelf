@@ -1,5 +1,5 @@
 use http::{
-    middlewares::HttpHandler,
+    middlewares::HttpViewHandler,
     request::{self, Connection},
 };
 use tokio::net::TcpListener;
@@ -17,16 +17,16 @@ impl From<request::Error> for anyhow::Error {
 #[tokio::main]
 async fn main() -> Result<()> {
     // List of all path handlers
-    let hi_handler: Box<dyn HttpHandler> = Box::new(HandleHiRequest {
-        msg: "Vivek is cool IG",
-        handle_url: "/user".to_string(),
-    });
-    let about_handle: Box<dyn HttpHandler> = Box::new(HandleAboutRequest {
-        msg: "This is about page",
-        handle_url: "/about".to_owned(),
-    });
+    let hi_handler: Box<dyn HttpViewHandler> = Box::new(HandleHiRequest::new(
+        "Vivek is cool IG",
+        "/user".to_string(),
+    ));
+    let about_handle: Box<dyn HttpViewHandler> = Box::new(HandleAboutRequest::new(
+        "This is about page",
+        "/about".to_owned(),
+    ));
 
-    let handlers: Vec<&Box<dyn HttpHandler>> = vec![&hi_handler, &about_handle];
+    let handlers: Vec<&Box<dyn HttpViewHandler>> = vec![&hi_handler, &about_handle];
     let listener = TcpListener::bind("127.0.0.1:8080").await?;
     loop {
         let (socket, _) = listener.accept().await?;
