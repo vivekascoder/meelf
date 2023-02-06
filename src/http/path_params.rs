@@ -52,6 +52,47 @@ impl PathParams {
 
         Ok(map)
     }
+
+    /// Return whether the `url` is equal to `path`.
+    pub fn is_eq(&self, url: String) -> bool {
+        // Use two pointer, start from 0.
+        // match exact string in both string until tou encounter `:`.
+        // in that case match upto `/` in both the string,
+        // Then again match exact string
+        let path_str = self.path.as_bytes();
+        let url_str = url.as_bytes();
+        let mut i = 0;
+        let mut j = 0;
+        while i < path_str.len() {
+            if path_str[i] as char == ':' {
+                // Increment the pointer i upto next `/`.
+                // and Increment the pointer j upto next `/`.
+                println!("i: {:?}", i);
+                while path_str[i] as char != '/' {
+                    println!("i: {:?}", i);
+                    i += 1;
+                    if i == path_str.len() {
+                        break;
+                    }
+                }
+                while url_str[j] as char != '/' {
+                    j += 1;
+                    if j == url_str.len() {
+                        break;
+                    }
+                }
+            } else if path_str[i] as char != url_str[j] as char {
+                println!("i: {:?}, j: {:?}", i, j);
+                return false;
+            }
+
+            // Increment the pointers.
+            i += 1;
+            j += 1;
+        }
+
+        true
+    }
 }
 
 #[cfg(test)]
@@ -60,12 +101,13 @@ mod tests {
 
     #[test]
     fn parse_url() {
-        let url = "https://vivek.ink/:user/address/:key/:ip".to_owned();
-        let request_url = "https://vivek.ink/vivekascoder/address/jumba/127.0.0.1/".to_owned();
+        let url = "/:user/address/:key/:ip/".to_owned();
+        let request_url = "/vivekascoder/address/jumba/127.0.0.1/".to_owned();
         let mut path_param = PathParams::new(url);
 
-        let map = path_param.parse(request_url);
+        let map = path_param.parse(request_url.clone());
         println!("{:?}", map);
+        println!("is_eq: {:?}", path_param.is_eq(request_url));
         assert!(false);
     }
 }
